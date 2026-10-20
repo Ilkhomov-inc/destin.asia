@@ -1,46 +1,31 @@
-'use client'
+import Image from "next/image";
+import { Mountain } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-import { useState } from 'react'
-import { cn } from '@/lib/utils'
-
-interface SmartImageProps {
-  src: string
-  alt: string
-  className?: string
-  /** Aspect ratio wrapper class, e.g. "aspect-[4/3]" */
-  ratioClassName?: string
-  priority?: boolean
-}
-
-/**
- * Lightweight lazy-loaded image with fade-in.
- * Uses a plain <img> so it works with any URL (remote placeholders,
- * locally uploaded files in /uploads, etc.) without next/image domain config.
- */
+/** next/image with a graceful placeholder when the URL is empty. */
 export function SmartImage({
   src,
   alt,
   className,
-  ratioClassName,
-  priority = false,
-}: SmartImageProps) {
-  const [loaded, setLoaded] = useState(false)
+  sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
+  priority,
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  sizes?: string;
+  priority?: boolean;
+}) {
+  if (!src) {
+    return (
+      <div className={cn("flex items-center justify-center bg-gradient-to-br from-jungle-2/30 via-moss/30 to-sunset/30", className)}>
+        <Mountain className="size-10 text-jungle/40" />
+      </div>
+    );
+  }
   return (
-    <div className={cn('relative overflow-hidden bg-muted', ratioClassName, className)}>
-      {!loaded && (
-        <div className="absolute inset-0 animate-pulse bg-muted" aria-hidden />
-      )}
-      <img
-        src={src}
-        alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        onLoad={() => setLoaded(true)}
-        className={cn(
-          'img-fade h-full w-full object-cover',
-          loaded && 'is-loaded'
-        )}
-      />
+    <div className={cn("relative overflow-hidden bg-paper-2", className)}>
+      <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
     </div>
-  )
+  );
 }

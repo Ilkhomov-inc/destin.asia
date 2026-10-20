@@ -1,161 +1,113 @@
-'use client'
+"use client";
+import { CheckCircle2, Send } from "lucide-react";
+import { useActionState, useState, type ReactNode } from "react";
+import { submitInquiry, type InquiryState } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Field, Input, Textarea } from "@/components/ui/field";
+import { getDict } from "@/dictionaries";
+import type { Locale } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-import { useState } from 'react'
-import { Send, Loader2, CheckCircle2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from '@/hooks/use-toast'
-import type { PublicTour } from '@/lib/types'
+type Channel = "telegram" | "whatsapp" | "phone";
 
-interface InquiryFormProps {
-  tours?: PublicTour[]
-  /** preselected tour title to show as context */
-  tourLabel?: string
+export function ChannelPicker({ locale, value, onChange }: { locale: Locale; value: Channel; onChange: (c: Channel) => void }) {
+  const t = getDict(locale).form;
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {(["telegram", "whatsapp", "phone"] as const).map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          className={cn(
+            "rounded-xl border px-2 py-2.5 text-sm font-semibold transition",
+            value === c ? "border-jungle bg-jungle text-white" : "border-ink/12 bg-white text-ink-soft hover:border-ink/30",
+          )}
+        >
+          {t[c]}
+        </button>
+      ))}
+    </div>
+  );
 }
 
-export function InquiryForm({ tours = [], tourLabel }: InquiryFormProps) {
-  const [name, setName] = useState('')
-  const [contact, setContact] = useState('')
-  const [message, setMessage] = useState('')
-  const [tourId, setTourId] = useState<string>('none')
-  // Honeypot: hidden field, must stay empty. Bots fill it.
-  const [company, setCompany] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
+export function InquiryForm({
+  locale,
+  tourId,
+  source,
+  compact,
+  children,
+  hidden,
+  submitLabel,
+  minimal,
+}: {
+  locale: Locale;
+  tourId?: string;
+  source: string;
+  compact?: boolean;
+  /** Extra fields rendered above the contact block. */
+  children?: ReactNode;
+  hidden?: Record<string, string | string[] | number | null | undefined>;
+  submitLabel?: string;
+  /** Hide the people/date fields (the caller collects them). */
+  minimal?: boolean;
+}) {
+  const t = getDict(locale).form;
+  const [state, action, pending] = useActionState<InquiryState, FormData>(submitInquiry, null);
+  const [channel, setChannel] = useState<Channel>("telegram");
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (company) {
-      // Bot filled the honeypot — pretend success, drop the data.
-      setDone(true)
-      return
-    }
-    if (!name.trim() || !contact.trim()) {
-      toast({ title: 'Заполните имя и контакт', variant: 'destructive' })
-      return
-    }
-    setSubmitting(true)
-    try {
-      const res = await fetch('/api/inquiries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          contact: contact.trim(),
-          message: message.trim(),
-          tourId: tourId && tourId !== 'none' ? tourId : null,
-        }),
-      })
-      if (!res.ok) throw new Error('Ошибка отправки')
-      setDone(true)
-      setName(''); setContact(''); setMessage(''); setTourId('none')
-      toast({ title: 'Заявка отправлена!', description: 'Мы свяжемся с вами в ближайшее время.' })
-    } catch {
-      toast({ title: 'Не удалось отправить заявку', description: 'Попробуйте ещё раз или напишите нам в мессенджер.', variant: 'destructive' })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (done) {
+  if (state?.ok) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card p-8 text-center">
-        <CheckCircle2 className="h-12 w-12 text-primary" />
-        <h3 className="text-lg font-semibold">Спасибо за заявку!</h3>
-        <p className="text-sm text-muted-foreground">
-          Мы получили ваше обращение и свяжемся с вами в ближайшее время.
-        </p>
-        <Button variant="outline" onClick={() => setDone(false)}>
-          Отправить ещё одну
-        </Button>
+      <div className="flex flex-col items-center gap-3 rounded-2xl bg-jungle/5 px-6 py-10 text-center">
+        <CheckCircle2 className="size-12 text-jungle-2" />
+        <p className="max-w-sm text-lg font-semibold text-ink">{t.success}</p>
       </div>
-    )
+    );
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <div className="grid gap-4">
-        {tourLabel && (
-          <p className="text-sm text-muted-foreground">
-            Заявка по туру: <span className="font-medium text-foreground">{tourLabel}</span>
-          </p>
-        )}
-        <div className="grid gap-2">
-          <Label htmlFor="inq-name">Имя *</Label>
-          <Input
-            id="inq-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Как к вам обращаться"
-            autoComplete="name"
-            required
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="inq-contact">Контакт *</Label>
-          <Input
-            id="inq-contact"
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-            placeholder="Телефон, email, Telegram или WhatsApp"
-            required
-          />
-        </div>
-        {tours.length > 0 && (
-          <div className="grid gap-2">
-            <Label htmlFor="inq-tour">Тур (необязательно)</Label>
-            <Select value={tourId} onValueChange={setTourId}>
-              <SelectTrigger id="inq-tour">
-                <SelectValue placeholder="Выберите тур" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Без привязки к туру</SelectItem>
-                {tours.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        <div className="grid gap-2">
-          <Label htmlFor="inq-message">Сообщение</Label>
-          <Textarea
-            id="inq-message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Даты, количество человек, пожелания…"
-            rows={4}
-          />
-        </div>
-
-        {/* Honeypot — visually hidden, label lures bots */}
-        <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-          <label htmlFor="inq-company">Компания (оставьте пустым)</label>
-          <input
-            id="inq-company"
-            type="text"
-            name="company"
-            tabIndex={-1}
-            autoComplete="off"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-          />
-        </div>
-
-        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
-          {submitting ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Отправляем…</>
-          ) : (
-            <><Send className="mr-2 h-4 w-4" /> Отправить заявку</>
-          )}
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Нажимая кнопку, вы соглашаетесь на обработку ваших данных для связи с вами.
-        </p>
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="source" value={source} />
+      <input type="hidden" name="channel" value={channel} />
+      {tourId && <input type="hidden" name="tour_id" value={tourId} />}
+      {Object.entries(hidden ?? {}).flatMap(([k, v]) =>
+        v === null || v === undefined || v === ""
+          ? []
+          : (Array.isArray(v) ? v : [v]).map((x, i) => <input key={`${k}${i}`} type="hidden" name={k} value={String(x)} />),
+      )}
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
+      {children}
+      <div className={cn("grid gap-4", !compact && "sm:grid-cols-2")}>
+        <Field label={t.name}>
+          <Input name="name" required maxLength={80} autoComplete="name" />
+        </Field>
+        <Field label={t.contact}>
+          <Input name="contact" required maxLength={80} autoComplete="tel" placeholder="+998 … / @username" />
+        </Field>
       </div>
+      <Field label={t.channel}>
+        <ChannelPicker locale={locale} value={channel} onChange={setChannel} />
+      </Field>
+      {!children && !minimal && (
+        <div className="grid grid-cols-2 gap-4">
+          <Field label={t.people}>
+            <Input name="people" type="number" min={1} max={500} inputMode="numeric" />
+          </Field>
+          <Field label={t.date}>
+            <Input name="date_from" type="date" />
+          </Field>
+        </div>
+      )}
+      <Field label={t.message}>
+        <Textarea name="message" maxLength={2000} placeholder={t.messagePh} rows={compact ? 2 : 3} />
+      </Field>
+      {state && !state.ok && <p className="rounded-xl bg-route/10 px-4 py-3 text-sm font-medium text-route-dark">{t.error}</p>}
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        <Send className="size-4" />
+        {pending ? getDict(locale).common.sending : submitLabel ?? t.submit}
+      </Button>
+      <p className="text-center text-xs text-ink-soft/80">{t.privacy}</p>
     </form>
-  )
+  );
 }

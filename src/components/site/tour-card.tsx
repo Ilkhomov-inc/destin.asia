@@ -1,54 +1,54 @@
-import Link from 'next/link'
-import { Clock, Tag, ArrowRight } from 'lucide-react'
-import { SmartImage } from './smart-image'
-import type { PublicTour } from '@/lib/types'
-import { Badge } from '@/components/ui/badge'
+import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
+import Link from "next/link";
+import { getDict } from "@/dictionaries";
+import { tr } from "@/lib/i18n";
+import type { Locale, Location, Settings, Tour } from "@/lib/types";
+import { Price } from "./price";
+import { SmartImage } from "./smart-image";
 
-export function TourCard({ tour }: { tour: PublicTour }) {
+export function TourCard({ tour, route, locale, rates }: { tour: Tour; route: Location[]; locale: Locale; rates: Settings["rates"] }) {
+  const d = getDict(locale);
   return (
-    <Link
-      href={`/tours/${tour.slug}`}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
-    >
-      <SmartImage
-        src={tour.coverImage || 'https://picsum.photos/seed/placeholder/800/600'}
-        alt={tour.title}
-        ratioClassName="aspect-[16/10] w-full"
-        className="rounded-t-xl"
-      />
+    <Link href={`/${locale}/tours/${tour.slug}`} className="group flex flex-col overflow-hidden rounded-card bg-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-lift">
+      <div className="relative">
+        <SmartImage src={tour.cover} alt={tr(tour.title, locale)} className="aspect-[16/10] transition duration-700 group-hover:scale-[1.04]" sizes="(min-width: 1024px) 40vw, 100vw" />
+        <div className="absolute inset-0 bg-gradient-to-t from-night/80 via-night/10 to-transparent" />
+        <div className="absolute top-3 left-3 flex gap-2">
+          <span className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-ink backdrop-blur">
+            <CalendarDays className="size-3.5 text-route" /> {d.common.days(tour.duration_days)}
+          </span>
+          <span className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-ink backdrop-blur">
+            <MapPin className="size-3.5 text-route" /> {d.common.locationsCount(route.length)}
+          </span>
+        </div>
+        <h3 className="absolute inset-x-5 bottom-4 font-display text-xl leading-tight font-semibold text-white sm:text-2xl">{tr(tour.title, locale)}</h3>
+      </div>
       <div className="flex flex-1 flex-col p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Badge variant="secondary" className="font-normal">
-            {tour.type === 'BASIC' ? 'Базовый тур' : 'Индивидуальный'}
-          </Badge>
-        </div>
-        <h3 className="text-lg font-semibold leading-snug">{tour.title}</h3>
-        <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-          {tour.description}
-        </p>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            {tour.durationDays} {pluralize(tour.durationDays, ['день', 'дня', 'дней'])}
+        <p className="line-clamp-2 text-sm leading-relaxed text-ink-soft">{tr(tour.short, locale)}</p>
+        {/* Route as a dotted trail of stops */}
+        <ol className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] font-medium text-ink">
+          {route.map((l, i) => (
+            <li key={l.id} className="flex items-center gap-1.5">
+              {i > 0 && <span className="h-px w-3 border-t-2 border-dotted border-route" />}
+              {tr(l.title, locale)}
+            </li>
+          ))}
+        </ol>
+        <div className="mt-auto flex items-center justify-between pt-5">
+          <span className="text-sm font-semibold text-ink">
+            {tour.price_from ? (
+              <>
+                {d.common.from} <Price usd={tour.price_from} rates={rates} />
+              </>
+            ) : (
+              <span className="text-ink-soft">{d.common.onRequest}</span>
+            )}
           </span>
-          <span className="inline-flex items-center gap-1 font-semibold text-primary">
-            <Tag className="h-4 w-4" />
-            {tour.price}
+          <span className="flex size-10 items-center justify-center rounded-full bg-ink text-white transition group-hover:bg-route">
+            <ArrowUpRight className="size-4" />
           </span>
-        </div>
-        <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
-          Подробнее
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
     </Link>
-  )
-}
-
-function pluralize(n: number, forms: [string, string, string]) {
-  const n10 = n % 10
-  const n100 = n % 100
-  if (n10 === 1 && n100 !== 11) return forms[0]
-  if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1]
-  return forms[2]
+  );
 }
