@@ -30,10 +30,9 @@ export type HeroConfig = {
   clouds?: HeroImage;
 };
 
-/** An Unsplash photo resized on their CDN; width/height keep the original aspect ratio. */
-function unsplash(id: string, width: number, height: number, long = 3200): HeroImage {
-  const k = long / Math.max(width, height);
-  return { src: `https://images.unsplash.com/${id}?w=${Math.round(width * k)}&q=85&fm=jpg`, width: Math.round(width * k), height: Math.round(height * k) };
+/** An Unsplash photo with its original size; the hero requests the widths it needs from their CDN. */
+function unsplash(id: string, width: number, height: number): HeroImage {
+  return { src: `https://images.unsplash.com/${id}`, width, height };
 }
 
 export const HERO: HeroConfig | null = {

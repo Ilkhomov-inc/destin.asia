@@ -36,8 +36,21 @@ const noSubscribe = () => () => {};
 const skipVideo = () =>
   Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function imgProps(img: HeroImage, alt: string, high: boolean) {
-  return getImageProps({ src: img.src, width: img.width, height: img.height, alt, sizes: "100vw", fetchPriority: high ? "high" : undefined }).props;
+const UNSPLASH_WIDTHS = [640, 960, 1280, 1600, 1920, 2560, 3200, 3840];
+
+/**
+ * <img> props for a frame drawn `zoom` times the viewport. Unsplash photos get a srcset straight
+ * from their CDN (one high-quality encode, AVIF/WebP via auto=format); local files go through next/image.
+ */
+function imgProps(img: HeroImage, alt: string, high: boolean, zoom: number) {
+  const sizes = `${Math.ceil(zoom * 100)}vw`;
+  if (img.src.startsWith("https://images.unsplash.com/")) {
+    const base = img.src.split("?")[0];
+    const url = (w: number) => `${base}?auto=format&fit=max&q=82&w=${w}`;
+    const widths = UNSPLASH_WIDTHS.filter((w) => w <= img.width);
+    return { src: url(1920), srcSet: widths.map((w) => `${url(w)} ${w}w`).join(", "), sizes, width: img.width, height: img.height, alt, decoding: "async" as const, fetchPriority: high ? ("high" as const) : undefined };
+  }
+  return getImageProps({ src: img.src, width: img.width, height: img.height, alt, sizes, quality: 75, fetchPriority: high ? "high" : undefined }).props;
 }
 
 export function CinematicHero({ locale, title, subtitle, config }: { locale: Locale; title: string; subtitle: string; config: HeroConfig }) {
@@ -74,7 +87,8 @@ export function CinematicHero({ locale, title, subtitle, config }: { locale: Loc
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_45%,transparent_55%,rgb(5_8_20/0.55))]" />
         <div className="film-grain pointer-events-none absolute inset-0" />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-night/55 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-night/75 to-transparent" />
+        {/* Deeper at the bottom so chapter captions stay readable over bright skies */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-night/85 via-night/45 to-transparent" />
         <motion.div className="pointer-events-none absolute inset-x-0 top-0 hidden bg-black landscape:block" style={{ height: bars }} />
         <motion.div className="pointer-events-none absolute inset-x-0 bottom-0 hidden bg-black landscape:block" style={{ height: bars }} />
 
@@ -105,7 +119,7 @@ export function CinematicHero({ locale, title, subtitle, config }: { locale: Loc
 
         {/* Chapter titles */}
         {CAPTIONS.map(([from, to], i) => (
-          <Caption key={i} progress={p} from={from} to={to} index={i} name={d.hero.stages[i].name} note={d.hero.stages[i].note} more={d.common.more} href={`/${locale}/locations/${config.chapters[i].slug}`} />
+          <Caption key={i} progress={p} from={from} to={to} name={d.hero.stages[i].name} note={d.hero.stages[i].note} text={d.hero.stages[i].text} more={d.common.more} href={`/${locale}/locations/${config.chapters[i].slug}`} />
         ))}
 
         {/* Altitude gauge */}
@@ -145,17 +159,21 @@ function Chapter({ chapter, index, progress, active, playVideo, alt }: { chapter
   const last = index === RANGES.length - 1;
   const opacity = useTransform(progress, [start, start + FADE, end - FADE, end], [first ? 1 : 0, 1, 1, last ? 1 : 0]);
   const { from, to } = chapter.camera;
-  const scale = useTransform(progress, [start, end], [from.scale, to.scale]);
-  const x = useTransform(progress, [start, end], [`${from.x}%`, `${to.x}%`]);
-  const y = useTransform(progress, [start, end], [`${from.y}%`, `${to.y}%`]);
-  const wide = imgProps(chapter.wide, alt, first);
-  const tall = imgProps(chapter.tall, alt, first);
+  // The frame is laid out at the largest zoom and only ever scaled down, so the browser never
+  // stretches an already rasterised image (which is what made the photos look soft).
+  const zoom = Math.max(from.scale, to.scale);
+  const scale = useTransform(progress, [start, end], [from.scale / zoom, to.scale / zoom]);
+  const x = useTransform(progress, [start, end], [`${from.x / zoom}%`, `${to.x / zoom}%`]);
+  const y = useTransform(progress, [start, end], [`${from.y / zoom}%`, `${to.y / zoom}%`]);
+  const wide = imgProps(chapter.wide, alt, first, zoom);
+  const tall = imgProps(chapter.tall, alt, first, zoom);
+  const inset = `${(-(zoom - 1) * 50).toFixed(2)}%`;
 
   return (
-    <motion.div className="absolute inset-0" style={{ opacity }} aria-hidden={!active}>
-      <motion.div className="absolute inset-0 will-change-transform" style={{ scale, x, y }}>
+    <motion.div className="absolute inset-0 overflow-hidden" style={{ opacity }} aria-hidden={!active}>
+      <motion.div className="absolute will-change-transform" style={{ inset, scale, x, y }}>
         <picture>
-          <source media="(orientation: portrait)" srcSet={tall.srcSet} sizes="100vw" />
+          <source media="(orientation: portrait)" srcSet={tall.srcSet} sizes={tall.sizes} />
           <img
             {...wide}
             alt={alt}
@@ -226,16 +244,19 @@ function Fog({ at, progress, clouds }: { at: number; progress: MotionValue<numbe
   );
 }
 
-function Caption({ progress, from, to, index, name, note, more, href }: { progress: MotionValue<number>; from: number; to: number; index: number; name: string; note: string; more: string; href: string }) {
+function Caption({ progress, from, to, name, note, text, more, href }: { progress: MotionValue<number>; from: number; to: number; name: string; note: string; text: string; more: string; href: string }) {
   const opacity = useTransform(progress, [from, from + 0.04, to - 0.04, to], [0, 1, 1, 0]);
   const y = useTransform(progress, [from, from + 0.05], [30, 0]);
   const [visible, setVisible] = useState(false);
   useMotionValueEvent(opacity, "change", (v) => setVisible(v > 0.05));
   return (
     <motion.div style={{ opacity, y }} className={cn("absolute bottom-24 left-4 max-w-[calc(100%-2rem)] sm:bottom-14 sm:left-8 lg:left-12", !visible && "pointer-events-none")}>
-      <p className="font-display text-sm font-semibold tracking-[0.3em] text-sunset">0{index + 1}</p>
+      <p className="flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-white/85 uppercase drop-shadow-[0_1px_8px_rgb(5_8_20/0.8)]">
+        <span className="h-px w-6 bg-sunset" />
+        {note}
+      </p>
       <h3 className="mt-2 font-display text-4xl leading-none font-bold text-white drop-shadow-[0_2px_24px_rgb(5_8_20/0.7)] sm:text-6xl">{name}</h3>
-      <p className="mt-3 max-w-md text-white/85 drop-shadow-[0_1px_12px_rgb(5_8_20/0.8)]">{note}</p>
+      <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/90 drop-shadow-[0_1px_12px_rgb(5_8_20/0.9)] sm:text-lg">{text}</p>
       <Link href={href} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-sunset">
         {more} <ArrowRight className="size-4" />
       </Link>

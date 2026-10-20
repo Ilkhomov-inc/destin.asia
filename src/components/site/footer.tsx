@@ -3,7 +3,8 @@ import Link from "next/link";
 import { getDict } from "@/dictionaries";
 import type { Locale, Settings } from "@/lib/types";
 import { InstagramIcon, TelegramIcon, WhatsAppIcon } from "./icons";
-import { Logo } from "./logo";
+import Image from "next/image";
+import fullLogo from "../../../public/brand/logo-full.png";
 import { Container } from "./section";
 
 export function Footer({ locale, settings }: { locale: Locale; settings: Settings }) {
@@ -17,10 +18,10 @@ export function Footer({ locale, settings }: { locale: Locale; settings: Setting
     ["/contacts", d.nav.contacts],
   ] as const;
   return (
-    <footer className="bg-night text-white">
+    <footer className="bg-[#15273f] text-white">
       <Container className="grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <Logo light />
+          <Image src={fullLogo} alt="Destin Asia" width={188} className="h-auto w-[188px]" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-white/60">{d.footer.tagline}</p>
           <div className="mt-6 flex gap-2">
             {[

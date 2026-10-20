@@ -66,9 +66,21 @@ const uz: Dict = {
     altitude: "Balandlik",
     route: "Kun yo'nalishi",
     stages: [
-      { name: "Genting Highlands", note: "1 800 m · bulutlar, osma yo'l va Chin Swee ibodatxonasi" },
-      { name: "Batu Caves", note: "272 pog'ona · oltin Murugan" },
-      { name: "Kuala Lumpur · KLCC", note: "Petronas 452 m · megapolis chiroqlari" },
+      {
+        name: "Genting Highlands",
+        note: "1 800 m · Kuala-Lumpurdan bir soat",
+        text: "Bulutlardan baland tog'lar: salqin havo, jungli ustidagi Awana Skyway osma yo'li va Chin Swee ibodatxonasining to'qqiz qavatli pagodasi.",
+      },
+      {
+        name: "Batu Caves",
+        note: "272 pog'ona · markazdan 30 daqiqa",
+        text: "Ohaktosh qoyadagi muqaddas g'orlar. Ibodatxonaga kamalak zinapoya olib boradi, etagida esa 42,7 metrlik oltin Murugan haykali turadi.",
+      },
+      {
+        name: "Kuala Lumpur · KLCC",
+        note: "Petronas 452 m · shahar yuragi",
+        text: "Petronas minoralari, KLCC bog'i va kechki qo'shiq aytuvchi favvoralar. Quyosh botishida, chiroqlar yonganda kelish eng yaxshisi.",
+      },
     ],
     arrived: "Kuala-Lumpurga xush kelibsiz",
     arrivedText: "Malayziyadagi birinchi kuningiz mana shunday bo'lishi mumkin. Tayyor turni tanlang yoki o'zingiznikini tuzing.",
