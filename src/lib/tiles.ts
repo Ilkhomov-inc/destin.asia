@@ -69,9 +69,12 @@ export function toScreen(lat: number, lng: number, view: View, width: number, he
   return { x: (p.x - view.center.x) * k + width / 2, y: (p.y - view.center.y) * k + height / 2 };
 }
 
-/** Tiles (at an integer zoom, drawn scaled) needed to cover the viewport. */
+/**
+ * Tiles (at an integer zoom, drawn scaled) needed to cover the viewport. The nearest zoom
+ * keeps the scale within ×0.71…×1.41; flooring it stretched tiles up to ×2 and blurred them.
+ */
 export function visibleTiles(view: View, width: number, height: number) {
-  const z = Math.max(0, Math.floor(view.zoom));
+  const z = Math.max(0, Math.round(view.zoom));
   const scale = 2 ** (view.zoom - z);
   const size = TILE_SIZE * scale;
   const cx = view.center.x * 2 ** z;
