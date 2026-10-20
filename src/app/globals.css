@@ -113,14 +113,6 @@ body {
 .anim-drift { animation: drift 24s ease-in-out infinite; }
 .anim-drift-slow { animation: drift 38s ease-in-out infinite reverse; }
 
-/* Ambient Kuala Lumpur background */
-@keyframes amb-drift {
-  from { transform: translateX(-700px); }
-  to { transform: translateX(2300px); }
-}
-.amb-drift { animation: amb-drift linear infinite; }
-#ambient[data-paused] * { animation-play-state: paused !important; }
-
 /* Film grain for the cinematic hero */
 @keyframes grain {
   0% { transform: translate(0, 0); }

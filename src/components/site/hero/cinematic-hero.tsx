@@ -28,7 +28,8 @@ const CAPTIONS: [number, number][] = [
 const GRADES = [
   "radial-gradient(120% 80% at 85% 8%, rgb(255 196 140 / 0.3), transparent 60%), linear-gradient(180deg, rgb(255 220 190 / 0.12), transparent 45%)",
   "radial-gradient(110% 80% at 15% 20%, rgb(255 170 80 / 0.22), transparent 60%), linear-gradient(180deg, transparent 50%, rgb(70 25 0 / 0.25))",
-  "linear-gradient(180deg, rgb(10 20 60 / 0.3), transparent 45%, rgb(5 10 30 / 0.5))",
+  // The left fade keeps the title readable over the city lights.
+  "linear-gradient(90deg, rgb(4 8 24 / 0.7), rgb(4 8 24 / 0.3) 32%, transparent 55%), linear-gradient(180deg, rgb(10 20 60 / 0.3), transparent 45%, rgb(5 10 30 / 0.5))",
 ];
 
 const noSubscribe = () => () => {};
@@ -36,7 +37,7 @@ const skipVideo = () =>
   Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function imgProps(img: HeroImage, alt: string, high: boolean) {
-  return getImageProps({ src: img.src, width: img.width, height: img.height, alt, sizes: "100vw", quality: 82, fetchPriority: high ? "high" : undefined }).props;
+  return getImageProps({ src: img.src, width: img.width, height: img.height, alt, sizes: "100vw", fetchPriority: high ? "high" : undefined }).props;
 }
 
 export function CinematicHero({ locale, title, subtitle, config }: { locale: Locale; title: string; subtitle: string; config: HeroConfig }) {
@@ -155,7 +156,12 @@ function Chapter({ chapter, index, progress, active, playVideo, alt }: { chapter
       <motion.div className="absolute inset-0 will-change-transform" style={{ scale, x, y }}>
         <picture>
           <source media="(orientation: portrait)" srcSet={tall.srcSet} sizes="100vw" />
-          <img {...wide} alt={alt} className="h-full w-full object-cover" style={{ objectPosition: chapter.focus?.wide }} />
+          <img
+            {...wide}
+            alt={alt}
+            className="h-full w-full object-cover [object-position:var(--focus-wide)] portrait:[object-position:var(--focus-tall)]"
+            style={{ "--focus-wide": chapter.focus?.wide ?? "50% 50%", "--focus-tall": chapter.focus?.tall ?? chapter.focus?.wide ?? "50% 50%" } as React.CSSProperties}
+          />
         </picture>
         {chapter.video && playVideo && <LoopVideo src={chapter.video.wide} tallSrc={chapter.video.tall} />}
       </motion.div>
@@ -239,7 +245,8 @@ function Caption({ progress, from, to, index, name, note, more, href }: { progre
 
 function MobileProgress({ progress, labels }: { progress: MotionValue<number>; labels: string[] }) {
   const width = useTransform(progress, [0.05, 0.9], ["0%", "100%"]);
-  const opacity = useTransform(progress, [0.86, 0.9], [1, 0]);
+  // Shown only between the intro and the arrival screen, so it never overlaps their text.
+  const opacity = useTransform(progress, [0.05, 0.08, 0.86, 0.9], [0, 1, 1, 0]);
   return (
     <motion.div style={{ opacity }} className="pointer-events-none absolute inset-x-4 top-20 lg:hidden">
       <div className="relative h-1 rounded-full bg-white/25">

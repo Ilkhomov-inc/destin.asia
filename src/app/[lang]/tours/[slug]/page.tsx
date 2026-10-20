@@ -12,7 +12,6 @@ import { getLocations, getSettings, getTour, getTours, routeOf } from "@/lib/dat
 import { hasLocale, tr, trList } from "@/lib/i18n";
 import { JsonLd, pageMeta, tripLd } from "@/lib/seo";
 import { LOCALES } from "@/lib/types";
-import { Sheet } from "@/components/site/sheet";
 
 export async function generateStaticParams() {
   const tours = await getTours();
@@ -40,7 +39,6 @@ export default async function TourPage({ params }: PageProps<"/[lang]/tours/[slu
 
   return (
     <>
-      <Sheet flatTop>
       <JsonLd data={tripLd(tour, route, lang)} />
       <section className="pt-24 sm:pt-28">
         <Container>
@@ -154,7 +152,6 @@ export default async function TourPage({ params }: PageProps<"/[lang]/tours/[slu
           </aside>
         </Container>
       </section>
-      </Sheet>
     </>
   );
 }

@@ -17,14 +17,17 @@ const CITY_KM = 8;
 const CLUSTER = "__city";
 const STYLE = "voyager" as const;
 
-type Mode = "region" | "city";
+type Mode = "region" | "city" | "tour";
 type Marker = { id: string; x: number; y: number; ax: number; ay: number; loc?: MapLocation; count?: number };
 
 export function RegionMap({ locations, tours, locale, className }: { locations: MapLocation[]; tours: MapTour[]; locale: Locale; className?: string }) {
   const d = getDict(locale);
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
-  const [mode, setMode] = useState<Mode>("region");
+  // `from` remembers the previous view so the switch can zoom in or out.
+  const [nav, setNav] = useState<{ mode: Mode; from: Mode }>({ mode: "region", from: "region" });
+  const mode = nav.mode;
+  const go = (m: Mode) => setNav((n) => ({ mode: m, from: n.mode }));
   const [active, setActive] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
   const [tourId, setTourId] = useState<string | null>(null);
@@ -41,22 +44,28 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
   const cityIds = useMemo(() => new Set(city.map((l) => l.id)), [city]);
   const clustered = city.length >= 2 && city.length < locations.length;
 
+  const tour = tours.find((t) => t.id === tourId);
+  const loc = (id: string) => locations.find((l) => l.id === id);
+  const stops = useMemo(
+    () => (tour?.location_ids ?? []).map((id) => locations.find((l) => l.id === id)).filter((l): l is MapLocation => !!l),
+    [tour, locations],
+  );
+
   const views = useMemo(() => {
     if (!size.w || !locations.length) return null;
     return {
       region: fitView(locations, size.w, size.h, 64, 12),
       city: fitView(city.length ? city : locations, size.w, size.h, 80, 15),
+      // A selected tour gets its own view, zoomed to exactly its stops.
+      tour: fitView(stops.length ? stops : locations, size.w, size.h, 84, 14),
     } satisfies Record<Mode, View>;
-  }, [size, locations, city]);
-
-  const tour = tours.find((t) => t.id === tourId);
-  const loc = (id: string) => locations.find((l) => l.id === id);
+  }, [size, locations, city, stops]);
   const current = active ? loc(active) : undefined;
 
   function markersFor(m: Mode): Marker[] {
     if (!views) return [];
     const v = views[m];
-    const shown = m === "city" ? city : clustered ? locations.filter((l) => !cityIds.has(l.id)) : locations;
+    const shown = m === "tour" ? stops : m === "city" ? city : clustered ? locations.filter((l) => !cityIds.has(l.id)) : locations;
     const pts: Marker[] = shown.map((l) => {
       const p = toScreen(l.lat, l.lng, v, size.w, size.h);
       return { id: l.id, x: p.x, y: p.y, ax: p.x, ay: p.y, loc: l };
@@ -68,14 +77,14 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
       pts.push({ id: CLUSTER, x: p.x, y: p.y, ax: p.x, ay: p.y, count: city.length });
     }
     // Labels sit under the pins on the trip view, so it needs more room between them.
-    return spread(pts, m === "region" ? 80 : 56);
+    return spread(pts, m === "city" ? 56 : 80);
   }
 
   /** Route through the markers of the current view (city stops collapse into the cluster). */
   function routeFor(markers: Marker[], m: Mode) {
     if (!tour) return { path: "", order: new Map<string, number>() };
     const ids = tour.location_ids
-      .filter((id) => loc(id) && (m === "region" || cityIds.has(id)))
+      .filter((id) => loc(id) && (m !== "city" || cityIds.has(id)))
       .map((id) => (m === "region" && clustered && cityIds.has(id) ? CLUSTER : id))
       .filter((id, i, arr) => i === 0 || arr[i - 1] !== id);
     const pts = ids.map((id) => markers.find((p) => p.id === id)).filter((p): p is Marker => !!p);
@@ -99,37 +108,42 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
   const pickTour = (id: string | null) => {
     setTourId(id);
     setActive(null);
-    const t = tours.find((x) => x.id === id);
-    if (t && clustered) setMode(t.location_ids.every((x) => cityIds.has(x)) ? "city" : "region");
+    go(id ? "tour" : "region");
   };
 
   const select = (id: string) => {
-    if (id === CLUSTER) return setMode("city");
-    if (mode === "region" && clustered && cityIds.has(id)) setMode("city");
+    if (id === CLUSTER) return go("city");
+    if (mode === "region" && clustered && cityIds.has(id)) go("city");
     setActive((cur) => (cur === id ? null : id));
   };
 
   const markers = markersFor(mode);
   const route = routeFor(markers, mode);
+  const labelled = mode === "city" ? new Map<string, LabelSide>() : fittingLabels(markers, locale);
+  // Zoom between views around the KL cluster, or the centre for tour views.
   const cluster = views && clustered ? markersFor("region").find((m) => m.id === CLUSTER) : undefined;
-  const origin = cluster ? `${cluster.x}px ${cluster.y}px` : "50% 50%";
+  const aroundCluster = (nav.from === "region" && mode === "city") || (nav.from === "city" && mode === "region");
+  const origin = cluster && aroundCluster ? `${cluster.x}px ${cluster.y}px` : "50% 50%";
+  const zoomStep = views && nav.from !== mode ? views[mode].zoom - views[nav.from].zoom : 0;
+  const k = Math.min(2.6, Math.max(1, 2 ** Math.abs(zoomStep)));
+  const zoomIn = zoomStep > 0;
   const listed = tour ? tour.location_ids.map(loc).filter((l): l is MapLocation => !!l) : locations;
 
   return (
     <div className={cn("grid gap-5 lg:grid-cols-[1fr_340px]", className)}>
       <div className="relative overflow-hidden rounded-[1.75rem] border border-line bg-[#ebe6da] shadow-card">
         <div ref={box} className="relative aspect-[4/5] w-full sm:aspect-[16/11]">
-          <AnimatePresence initial={false} custom={mode}>
+          <AnimatePresence initial={false} custom={{ k, zoomIn }}>
             {views && (
               <motion.div
-                key={mode}
+                key={mode === "tour" ? `tour-${tourId}` : mode}
                 className="absolute inset-0"
                 style={{ transformOrigin: origin }}
-                custom={mode}
+                custom={{ k, zoomIn }}
                 variants={{
-                  enter: (m: Mode) => ({ opacity: 0, scale: m === "city" ? 0.35 : 2.6 }),
+                  enter: (c: { k: number; zoomIn: boolean }) => ({ opacity: 0, scale: c.zoomIn ? 1 / c.k : c.k }),
                   show: { opacity: 1, scale: 1 },
-                  leave: (m: Mode) => ({ opacity: 0, scale: m === "city" ? 2.6 : 0.35 }),
+                  leave: (c: { k: number; zoomIn: boolean }) => ({ opacity: 0, scale: c.zoomIn ? c.k : 1 / c.k }),
                 }}
                 initial="enter"
                 animate="show"
@@ -174,7 +188,7 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
                     hovered={hover === m.id}
                     dim={!!tour && m.id !== CLUSTER && !route.order.has(m.id)}
                     order={m.loc ? route.order.get(m.id) : undefined}
-                    showLabel={mode === "region" || active === m.id || hover === m.id}
+                    label={labelled.get(m.id) ?? (active === m.id || hover === m.id ? "below" : null)}
                     onSelect={() => select(m.id)}
                     onHover={(on) => setHover(on ? m.id : null)}
                   />
@@ -205,14 +219,14 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
         )}
 
         {/* View switch */}
-        {clustered && (
+        {(clustered || mode === "tour") && (
           <div className="absolute bottom-3 left-3 z-10">
-            {mode === "city" ? (
-              <button type="button" onClick={() => setMode("region")} className="flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-bold text-white shadow-lift">
+            {mode !== "region" ? (
+              <button type="button" onClick={() => pickTour(null)} className="flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-bold text-white shadow-lift">
                 <ArrowLeft className="size-3.5" /> {d.home.mapAll}
               </button>
             ) : (
-              <button type="button" onClick={() => setMode("city")} className="flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-xs font-bold text-ink shadow-lift backdrop-blur">
+              <button type="button" onClick={() => go("city")} className="flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 text-xs font-bold text-ink shadow-lift backdrop-blur">
                 <ZoomIn className="size-3.5 text-route" /> {d.home.mapOpenCity}
               </button>
             )}
@@ -284,6 +298,29 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
   );
 }
 
+type LabelSide = "below" | "right" | "left";
+
+/** Places each pin's label below, right or left of it — wherever it doesn't hit another label or pin. */
+function fittingLabels(markers: Marker[], locale: Locale) {
+  const d = getDict(locale);
+  const boxes: { x0: number; x1: number; y0: number; y1: number }[] = markers.map((m) => ({ x0: m.x - 26, x1: m.x + 26, y0: m.y - 26, y1: m.y + 26 }));
+  const placed = new Map<string, LabelSide>();
+  for (const m of markers) {
+    const text = m.count !== undefined ? `Kuala Lumpur · ${d.common.locationsCount(m.count)}` : m.loc!.title;
+    const w = Math.min(230, text.length * 6.6 + 18);
+    const options: [LabelSide, { x0: number; x1: number; y0: number; y1: number }][] = [
+      ["below", { x0: m.x - w / 2, x1: m.x + w / 2, y0: m.y + 26, y1: m.y + 50 }],
+      ["right", { x0: m.x + 28, x1: m.x + 28 + w, y0: m.y - 12, y1: m.y + 12 }],
+      ["left", { x0: m.x - 28 - w, x1: m.x - 28, y0: m.y - 12, y1: m.y + 12 }],
+    ];
+    const fit = options.find(([, box]) => !boxes.some((b) => box.x0 < b.x1 && box.x1 > b.x0 && box.y0 < b.y1 && box.y1 > b.y0));
+    if (!fit) continue;
+    boxes.push(fit[1]);
+    placed.set(m.id, fit[0]);
+  }
+  return placed;
+}
+
 function Tiles({ view, w, h }: { view: View; w: number; h: number }) {
   const tiles = visibleTiles(view, w, h);
   return (
@@ -312,7 +349,7 @@ function Pin({
   hovered,
   dim,
   order,
-  showLabel,
+  label,
   onSelect,
   onHover,
 }: {
@@ -322,20 +359,20 @@ function Pin({
   hovered: boolean;
   dim: boolean;
   order?: number;
-  showLabel: boolean;
+  label: LabelSide | null;
   onSelect: () => void;
   onHover: (on: boolean) => void;
 }) {
   const d = getDict(locale);
   const isCluster = marker.count !== undefined;
-  const label = isCluster ? `Kuala Lumpur · ${d.common.locationsCount(marker.count!)}` : marker.loc!.title;
+  const title = isCluster ? `Kuala Lumpur · ${d.common.locationsCount(marker.count!)}` : marker.loc!.title;
   return (
     <button
       type="button"
       onClick={onSelect}
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
-      aria-label={label}
+      aria-label={title}
       className={cn("absolute z-[1] -translate-x-1/2 -translate-y-1/2 transition-opacity", dim && "opacity-40", (active || hovered) && "z-[2]")}
       style={{ left: marker.x, top: marker.y }}
     >
@@ -357,8 +394,17 @@ function Pin({
       {order !== undefined && (
         <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-white bg-route text-[10px] font-bold text-white">{order + 1}</span>
       )}
-      {(showLabel || isCluster) && (
-        <span className="pointer-events-none absolute top-full left-1/2 mt-1 -translate-x-1/2 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold whitespace-nowrap text-ink shadow">{label}</span>
+      {label && (
+        <span
+          className={cn(
+            "pointer-events-none absolute rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-bold whitespace-nowrap text-ink shadow",
+            label === "below" && "top-full left-1/2 mt-1 -translate-x-1/2",
+            label === "right" && "top-1/2 left-full ml-1.5 -translate-y-1/2",
+            label === "left" && "top-1/2 right-full mr-1.5 -translate-y-1/2",
+          )}
+        >
+          {title}
+        </span>
       )}
     </button>
   );

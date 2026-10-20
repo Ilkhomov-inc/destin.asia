@@ -17,23 +17,36 @@ const SIZES: Record<string, { width?: number; height?: number }> = {
 };
 
 if (!existsSync(IN)) {
-  console.error(`No ${IN}/ folder. Put the generated frames there first (see docs/ai-studio-prompts.md).`);
+  console.error(
+    `No ${IN}/ folder. Put the generated frames there first (see docs/ai-studio-prompts.md).`,
+  );
   process.exit(1);
 }
 mkdirSync(OUT, { recursive: true });
 
-for (const file of readdirSync(IN).filter((f) => IMAGES.test(f))) {
-  const name = path.parse(file).name.toLowerCase();
-  const kind = Object.keys(SIZES).find((k) => name.endsWith(k) || name === k);
-  if (!kind) {
-    console.warn(`skip ${file}: name should end with -wide, -tall, clouds or og`);
-    continue;
+async function main() {
+  for (const file of readdirSync(IN).filter((f) => IMAGES.test(f))) {
+    const name = path.parse(file).name.toLowerCase();
+    const kind = Object.keys(SIZES).find((k) => name.endsWith(k) || name === k);
+    if (!kind) {
+      console.warn(
+        `skip ${file}: name should end with -wide, -tall, clouds or og`,
+      );
+      continue;
+    }
+    const target = path.join(OUT, `${name}.jpg`);
+    const info = await sharp(path.join(IN, file))
+      .rotate()
+      .resize({ ...SIZES[kind], withoutEnlargement: true })
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toFile(target);
+    console.log(
+      `${file} → ${target} (${info.width}×${info.height}, ${Math.round(info.size / 1024)} KB)`,
+    );
   }
-  const target = path.join(OUT, `${name}.jpg`);
-  const info = await sharp(path.join(IN, file))
-    .rotate()
-    .resize({ ...SIZES[kind], withoutEnlargement: true })
-    .jpeg({ quality: 90, mozjpeg: true })
-    .toFile(target);
-  console.log(`${file} → ${target} (${info.width}×${info.height}, ${Math.round(info.size / 1024)} KB)`);
 }
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

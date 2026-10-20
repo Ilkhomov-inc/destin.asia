@@ -9,7 +9,6 @@ import { getDict } from "@/dictionaries";
 import { getSettings } from "@/lib/data";
 import { hasLocale, tr } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
-import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/about">) {
   const { lang } = await params;
@@ -26,7 +25,6 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
   const s = await getSettings();
   return (
     <>
-      <Sheet flatTop>
       <section className="topo-bg pt-28 pb-16 sm:pt-36 sm:pb-24">
         <Container className="grid items-center gap-12 lg:grid-cols-2">
           <div>
@@ -57,7 +55,6 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
           <InfoGrid locale={lang} />
         </Container>
       </section>
-      </Sheet>
     </>
   );
 }

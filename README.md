@@ -55,10 +55,6 @@ npm run dev
 - Кадры генерируются в Google AI Studio по промптам из [docs/ai-studio-prompts.md](docs/ai-studio-prompts.md) и кладутся в `assets-incoming/`.
 - `npx tsx scripts/prepare-hero.ts` уменьшает их и складывает в `src/assets/hero/`; затем главы прописываются в `src/content/hero.ts`.
 
-## Живой фон
-
-Фон с Куала-Лумпуром (`src/components/site/ambient/`) виден в «окнах» между разделами. Время суток стартует с текущего времени в KL, а полный день проходит за 8 минут (`CYCLE_MS` в `sky.ts`). Анимация работает, только пока окно на экране. В dev-режиме можно проверить фазы: `?skyPhase=0.9` (ночь), `?skyPhase=0.5` (день), `?skySpeed=30` (ускорить).
-
 ## Структура
 
 | Путь | Что там |
@@ -67,7 +63,6 @@ npm run dev
 | `src/app/admin/` | Админка: заявки, локации, туры, машины, отзывы, настройки |
 | `src/components/site/hero/` | Главный экран: кино-hero на фото и запасной SVG-hero |
 | `src/components/site/region-map.tsx` | Карта локаций с маршрутами туров |
-| `src/components/site/ambient/` | Живой фон: KLCC, канатка, смена дня и ночи |
 | `src/dictionaries/` | Тексты интерфейса RU/UZ |
 | `src/content/seed.ts` | Стартовый контент (перенесён с base44) |
 | `src/lib/store/` | Хранилище: Supabase или локальный JSON |

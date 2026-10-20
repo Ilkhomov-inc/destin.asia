@@ -13,7 +13,6 @@ import { getLocation, getLocations, getSettings, getTours, routeOf } from "@/lib
 import { hasLocale, tr, trList } from "@/lib/i18n";
 import { attractionLd, JsonLd, pageMeta } from "@/lib/seo";
 import { LOCALES } from "@/lib/types";
-import { Sheet } from "@/components/site/sheet";
 
 export async function generateStaticParams() {
   const locations = await getLocations();
@@ -46,7 +45,6 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
 
   return (
     <>
-      <Sheet flatTop>
       <JsonLd data={attractionLd(location, lang)} />
       <section className="pt-24 sm:pt-28">
         <Container>
@@ -138,7 +136,6 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
           </div>
         </Container>
       </section>
-      </Sheet>
     </>
   );
 }

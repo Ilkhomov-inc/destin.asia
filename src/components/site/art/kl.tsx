@@ -1,4 +1,4 @@
-// Shared Kuala Lumpur illustration pieces, used by the SVG hero and the ambient background.
+// Kuala Lumpur illustration pieces for the drawn SVG hero.
 
 /** Small deterministic PRNG (mulberry32) so server and client draw the same skyline. */
 export function rng(seed: number) {

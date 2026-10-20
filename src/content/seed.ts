@@ -640,10 +640,10 @@ export const seedSettings: Settings = {
   whatsapp: "https://wa.me/qr/CBD3KLP5UWNCD1",
   instagram: "https://www.instagram.com/destin.asia/",
   address: "Kuala Lumpur, Malaysia",
-  hero_title: { ru: "С гор — в мегаполис", uz: "Tog'lardan — megapolisga" },
+  hero_title: { ru: "Малайзия на вашем языке", uz: "Malayziya — o'z tilingizda" },
   hero_subtitle: {
-    ru: "Личный гид по Малайзии на русском и узбекском. Готовые туры и маршруты под ваши даты.",
-    uz: "Malayziya bo'ylab rus va o'zbek tillarida shaxsiy gid. Tayyor turlar va sanalaringizga mos yo'nalishlar.",
+    ru: "Личный гид на русском и узбекском. Встретим в аэропорту, покажем главное и подстроим маршрут под ваши даты.",
+    uz: "Rus va o'zbek tilida shaxsiy gid. Aeroportda kutib olamiz, eng asosiylarini ko'rsatamiz va yo'nalishni sanalaringizga moslaymiz.",
   },
   about: {
     ru: "Мы живём в Малайзии больше года. Принимали туристов из Казахстана и Узбекистана — и соло, и группы до 10 человек, но можем и больше: гидов хватает.\n\nБерём в аренду авто любого класса, гид сам за рулём — так удобнее для туристов и выгоднее по цене. Для больших групп есть знакомые водители минивэнов и автобусов. Проводим любые туры по Куала-Лумпуру и индивидуальные маршруты под запрос.",

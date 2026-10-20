@@ -9,8 +9,6 @@ import { LocationCard } from "@/components/site/location-card";
 import { Reveal } from "@/components/site/reveal";
 import { Container, SectionHead } from "@/components/site/section";
 import { RegionMap } from "@/components/site/region-map";
-import { SceneWindow } from "@/components/site/scene-window";
-import { Sheet } from "@/components/site/sheet";
 import { TourCard } from "@/components/site/tour-card";
 import { VehicleCard } from "@/components/site/vehicle-card";
 import { buttonClass } from "@/components/ui/button";
@@ -46,8 +44,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       ) : (
         <DescentHero locale={lang} title={tr(settings.hero_title, lang)} subtitle={tr(settings.hero_subtitle, lang)} />
       )}
-
-      <Sheet>
       {/* Realistic map of all locations */}
       <section className="topo-bg py-20 sm:py-28">
         <Container>
@@ -85,10 +81,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </div>
         </Container>
       </section>
-
-      </Sheet>
-      <SceneWindow caption={d.ambient.captions[0]} />
-      <Sheet>
       {/* What's included — as a map legend */}
       <section className="py-20 sm:py-28">
         <Container>
@@ -185,10 +177,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </Container>
         </section>
       )}
-
-      </Sheet>
-      <SceneWindow caption={d.ambient.captions[1]} />
-      <Sheet>
       {/* Practical info */}
       <section className="topo-bg py-20 sm:py-28">
         <Container>
@@ -204,7 +192,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           <Faq items={d.faq.items} />
         </Container>
       </section>
-      </Sheet>
     </>
   );
 }

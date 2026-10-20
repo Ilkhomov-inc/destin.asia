@@ -10,7 +10,6 @@ import { getDict } from "@/dictionaries";
 import { getLocations, getSettings, getTours, routeOf } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
-import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/tours">) {
   const { lang } = await params;
@@ -30,7 +29,6 @@ export default async function ToursPage({ params }: PageProps<"/[lang]/tours">) 
       <PageHero eyebrow={d.nav.tours} title={d.tours.title} text={d.tours.text}>
         {hasPrices && <CurrencySwitch className="mt-6" />}
       </PageHero>
-      <Sheet>
       <section className="py-12 sm:py-16">
         <Container>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -50,7 +48,6 @@ export default async function ToursPage({ params }: PageProps<"/[lang]/tours">) 
           </div>
         </Container>
       </section>
-      </Sheet>
     </>
   );
 }
