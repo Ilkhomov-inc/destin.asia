@@ -6,6 +6,7 @@ import { getDict } from "@/dictionaries";
 import { getLocations, getSettings, getVehicles } from "@/lib/data";
 import { hasLocale, tr } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/build">) {
   const { lang } = await params;
@@ -22,6 +23,7 @@ export default async function BuildPage({ params }: PageProps<"/[lang]/build">) 
   return (
     <>
       <PageHero eyebrow={d.home.howEyebrow} title={d.build.title} text={d.build.text} />
+      <Sheet>
       <section className="py-10 sm:py-14">
         <Container>
           <TourBuilder
@@ -32,6 +34,7 @@ export default async function BuildPage({ params }: PageProps<"/[lang]/build">) 
           />
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

@@ -3,12 +3,13 @@ import { LocationBrowser } from "@/components/site/location-browser";
 import { LocationCard } from "@/components/site/location-card";
 import { PageHero } from "@/components/site/page-hero";
 import { Container } from "@/components/site/section";
-import { TopoMap } from "@/components/site/topo-map";
+import { RegionMap } from "@/components/site/region-map";
 import { getDict } from "@/dictionaries";
 import { getLocations, getTours } from "@/lib/data";
 import { hasLocale, tr } from "@/lib/i18n";
 import { toMapData } from "@/lib/map-data";
 import { pageMeta } from "@/lib/seo";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/locations">) {
   const { lang } = await params;
@@ -26,6 +27,7 @@ export default async function LocationsPage({ params }: PageProps<"/[lang]/locat
   return (
     <>
       <PageHero eyebrow={d.nav.locations} title={d.locations.title} text={d.locations.text} />
+      <Sheet>
       <section className="py-12 sm:py-16">
         <Container>
           <LocationBrowser
@@ -42,9 +44,10 @@ export default async function LocationsPage({ params }: PageProps<"/[lang]/locat
       <section className="topo-bg border-t border-line py-16 sm:py-20">
         <Container>
           <h2 className="mb-8 font-display text-3xl font-semibold">{d.home.mapTitle}</h2>
-          <TopoMap locations={map.locations} tours={map.tours} locale={lang} />
+          <RegionMap locations={map.locations} tours={map.tours} locale={lang} />
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

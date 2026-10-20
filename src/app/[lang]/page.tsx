@@ -1,13 +1,16 @@
 import { ArrowRight, Camera, Car, Footprints, Languages, MessageCircle, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CinematicHero } from "@/components/site/hero/cinematic-hero";
 import { DescentHero } from "@/components/site/hero/descent-hero";
 import { Faq } from "@/components/site/faq";
 import { InfoGrid } from "@/components/site/info-grid";
 import { LocationCard } from "@/components/site/location-card";
 import { Reveal } from "@/components/site/reveal";
 import { Container, SectionHead } from "@/components/site/section";
-import { TopoMap } from "@/components/site/topo-map";
+import { RegionMap } from "@/components/site/region-map";
+import { SceneWindow } from "@/components/site/scene-window";
+import { Sheet } from "@/components/site/sheet";
 import { TourCard } from "@/components/site/tour-card";
 import { VehicleCard } from "@/components/site/vehicle-card";
 import { buttonClass } from "@/components/ui/button";
@@ -16,6 +19,7 @@ import { getLocations, getReviews, getSettings, getTours, getVehicles, routeOf }
 import { hasLocale, tr } from "@/lib/i18n";
 import { toMapData } from "@/lib/map-data";
 import { JsonLd, organizationLd } from "@/lib/seo";
+import { HERO } from "@/content/hero";
 
 const LEGEND_ICONS = [Languages, Car, Footprints, Camera, UtensilsCrossed, MessageCircle];
 
@@ -37,14 +41,19 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   return (
     <>
       <JsonLd data={organizationLd(settings, lang)} />
-      <DescentHero locale={lang} title={tr(settings.hero_title, lang)} subtitle={tr(settings.hero_subtitle, lang)} />
+      {HERO ? (
+        <CinematicHero locale={lang} title={tr(settings.hero_title, lang)} subtitle={tr(settings.hero_subtitle, lang)} config={HERO} />
+      ) : (
+        <DescentHero locale={lang} title={tr(settings.hero_title, lang)} subtitle={tr(settings.hero_subtitle, lang)} />
+      )}
 
-      {/* Topographic route map */}
+      <Sheet>
+      {/* Realistic map of all locations */}
       <section className="topo-bg py-20 sm:py-28">
         <Container>
           <SectionHead eyebrow={d.home.mapEyebrow} title={d.home.mapTitle} text={d.home.mapText} />
           <Reveal>
-            <TopoMap locations={map.locations} tours={map.tours} locale={lang} />
+            <RegionMap locations={map.locations} tours={map.tours} locale={lang} />
           </Reveal>
         </Container>
       </section>
@@ -77,6 +86,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </Container>
       </section>
 
+      </Sheet>
+      <SceneWindow caption={d.ambient.captions[0]} />
+      <Sheet>
       {/* What's included — as a map legend */}
       <section className="py-20 sm:py-28">
         <Container>
@@ -174,6 +186,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         </section>
       )}
 
+      </Sheet>
+      <SceneWindow caption={d.ambient.captions[1]} />
+      <Sheet>
       {/* Practical info */}
       <section className="topo-bg py-20 sm:py-28">
         <Container>
@@ -189,6 +204,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           <Faq items={d.faq.items} />
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

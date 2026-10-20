@@ -8,13 +8,13 @@ export function SmartImage({
   alt,
   className,
   sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
-  priority,
+  preload,
 }: {
   src?: string | null;
   alt: string;
   className?: string;
   sizes?: string;
-  priority?: boolean;
+  preload?: boolean;
 }) {
   if (!src) {
     return (
@@ -25,7 +25,7 @@ export function SmartImage({
   }
   return (
     <div className={cn("relative overflow-hidden bg-paper-2", className)}>
-      <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+      <Image src={src} alt={alt} fill sizes={sizes} preload={preload} className="object-cover" />
     </div>
   );
 }

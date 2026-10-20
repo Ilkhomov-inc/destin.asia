@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Unbounded } from "next/font/google";
 import { notFound } from "next/navigation";
+import { AmbientScene } from "@/components/site/ambient/ambient-scene";
+import { skyScript } from "@/components/site/ambient/sky";
 import { ContactFab } from "@/components/site/contact-fab";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+import { SceneWindow } from "@/components/site/scene-window";
 import { getDict } from "@/dictionaries";
 import { getSettings } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
@@ -39,11 +42,16 @@ export default async function LangLayout({ children, params }: LayoutProps<"/[la
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const settings = await getSettings();
+  const d = getDict(lang);
   return (
     <html lang={lang} className={`${display.variable} ${sans.variable}`} data-scroll-behavior="smooth">
       <body className="min-h-svh">
+        {/* Sets the ambient sky for the current time in KL before the scene below is painted */}
+        <script dangerouslySetInnerHTML={{ __html: skyScript(process.env.NODE_ENV === "development") }} />
+        <AmbientScene />
         <Header locale={lang} />
         <main>{children}</main>
+        <SceneWindow tall caption={d.ambient.captions[2]} />
         <Footer locale={lang} settings={settings} />
         <ContactFab locale={lang} telegram={settings.telegram} whatsapp={settings.whatsapp} />
       </body>

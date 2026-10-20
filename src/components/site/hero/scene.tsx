@@ -1,5 +1,7 @@
 // The tall illustrated scene the hero camera travels down:
 // Genting Highlands (0–1100) → jungle & Batu Caves (1100–2050) → Kuala Lumpur at night (2050–3200).
+import { Gondola, KlTower, Merdeka118, Petronas, rng, skyline, Skybridge } from "../art/kl";
+
 export const SCENE_W = 1440;
 export const SCENE_H = 3200;
 
@@ -14,39 +16,8 @@ export const PINS = [
   { key: "klcc", x: 722, y: 2985, slug: "klcc" },
 ] as const;
 
-function rng(seed: number) {
-  return () => {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-type Building = { x: number; w: number; h: number; windows: { x: number; y: number; t: number }[] };
-
-function skyline(seed: number, base: number, minH: number, maxH: number, minW: number, maxW: number, litRatio: number, skip?: [number, number][]) {
-  const r = rng(seed);
-  const out: Building[] = [];
-  let x = -20;
-  while (x < SCENE_W + 20) {
-    const w = minW + r() * (maxW - minW);
-    const h = minH + r() * (maxH - minH);
-    if (!skip?.some(([a, b]) => x + w > a && x < b)) {
-      const windows: Building["windows"] = [];
-      if (litRatio > 0)
-        for (let wy = base - h + 14; wy < base - 10; wy += 16)
-          for (let wx = x + 7; wx < x + w - 8; wx += 12) if (r() < litRatio) windows.push({ x: wx, y: wy, t: Math.floor(r() * 4) });
-      out.push({ x, w, h, windows });
-    }
-    x += w + 2 + r() * 10;
-  }
-  return out;
-}
-
-const FAR = skyline(7, 2990, 160, 420, 40, 90, 0);
-const MID = skyline(19, 3060, 120, 360, 46, 96, 0.22, [[600, 850]]);
+const FAR = skyline({ seed: 7, base: 2990, width: SCENE_W, minH: 160, maxH: 420, minW: 40, maxW: 90 });
+const MID = skyline({ seed: 19, base: 3060, width: SCENE_W, minH: 120, maxH: 360, minW: 46, maxW: 96, litRatio: 0.22, skip: [[600, 850]] });
 const STARS = (() => {
   const r = rng(3);
   return Array.from({ length: 90 }, () => ({ x: r() * SCENE_W, y: 2080 + r() * 640, s: 0.6 + r() * 1.6, t: Math.floor(r() * 4) }));
@@ -78,34 +49,6 @@ function Pagoda({ x, y }: { x: number; y: number }) {
         </g>
       ))}
       <path d={`M${x} ${y - 9 * 15 - 30} L${x - 4} ${y - 9 * 15} L${x + 4} ${y - 9 * 15} Z`} fill="#e3b23c" />
-    </g>
-  );
-}
-
-function Tower({ cx, base }: { cx: number; base: number }) {
-  // Petronas-like stepped tower.
-  const steps = [
-    { w: 92, top: 2700 },
-    { w: 82, top: 2600 },
-    { w: 72, top: 2530 },
-    { w: 60, top: 2475 },
-    { w: 46, top: 2435 },
-    { w: 30, top: 2405 },
-  ];
-  return (
-    <g>
-      {steps.map((s, i) => (
-        <g key={i}>
-          <rect x={cx - s.w / 2} y={s.top} width={s.w} height={(i === 0 ? base : steps[i - 1].top) - s.top + 1} fill="url(#steel)" />
-          {Array.from({ length: Math.floor(s.w / 9) }, (_, k) => (
-            <rect key={k} x={cx - s.w / 2 + 5 + k * 9} y={s.top + 3} width="1.4" height={(i === 0 ? base : steps[i - 1].top) - s.top - 6} fill="#fff6dc" opacity=".55" />
-          ))}
-        </g>
-      ))}
-      <rect x={cx - 9} y={2380} width="18" height="26" fill="#cfd6e2" />
-      <circle cx={cx} cy={2378} r="9" fill="#e7ecf3" />
-      <rect x={cx - 1.6} y={2290} width="3.2" height="90" fill="#e7ecf3" />
-      <circle cx={cx} cy={2290} r="3" fill="#ff5a3c" className="animate-twinkle" />
     </g>
   );
 }
@@ -196,9 +139,7 @@ export function DescentScene() {
       {[0, 1, 2, 3, 4].map((i) => (
         <g key={i}>
           <g>
-            <line x1="0" y1="-14" x2="0" y2="0" stroke="#3b4a44" strokeWidth="2" />
-            <rect x="-13" y="0" width="26" height="22" rx="6" fill={i % 2 ? "#d6452b" : "#f5efe4"} stroke="#3b4a44" strokeWidth="1.5" />
-            <rect x="-9" y="5" width="18" height="8" rx="2" fill="#bcd8e3" />
+            <Gondola body={i % 2 ? "#d6452b" : "#f5efe4"} />
             <animateMotion dur="26s" repeatCount="indefinite" begin={`${-i * 5.2}s`} keyPoints="0;1" keyTimes="0;1" calcMode="linear">
               <mpath href="#cable" />
             </animateMotion>
@@ -256,18 +197,9 @@ export function DescentScene() {
       ))}
       <ellipse cx="720" cy="3000" rx="900" ry="420" fill="url(#cityglow)" />
       {/* Merdeka 118 */}
-      <path d="M1080 3000 L1094 2470 L1118 2400 L1130 2240 L1142 2400 L1166 2470 L1180 3000Z" fill="#33407a" />
-      <path d="M1130 2240 L1142 2400 L1166 2470 L1180 3000 L1130 3000Z" fill="#26305f" />
+      <Merdeka118 cx={1130} base={3000} />
       {/* KL Tower */}
-      <g>
-        <path d="M318 3000 L326 2590 L334 2590 L342 3000Z" fill="#3a4682" />
-        <ellipse cx="330" cy="2590" rx="34" ry="12" fill="#4a579a" />
-        <rect x="300" y="2560" width="60" height="30" rx="12" fill="#5664aa" />
-        <rect x="304" y="2570" width="52" height="5" fill="#ffd38a" opacity=".8" />
-        <ellipse cx="330" cy="2560" rx="28" ry="8" fill="#4a579a" />
-        <rect x="328.5" y="2470" width="3" height="90" fill="#8a96c8" />
-        <circle cx="330" cy="2470" r="3" fill="#ff5a3c" className="animate-twinkle" />
-      </g>
+      <KlTower cx={330} base={3000} />
       {FAR.map((b, i) => (
         <rect key={i} x={b.x} y={2990 - b.h} width={b.w} height={b.h + 10} fill="#2b3266" opacity=".85" />
       ))}
@@ -275,11 +207,9 @@ export function DescentScene() {
       <path d="M-40 2300 C300 2240 600 2330 900 2290 C1150 2260 1300 2300 1480 2280" fill="none" stroke="#11182f" strokeWidth="26" />
       <path d="M-40 2296 C300 2236 600 2326 900 2286 C1150 2256 1300 2296 1480 2276" fill="none" stroke="#ff6b4a" strokeWidth="3" strokeDasharray="30 50" className="anim-dash" />
       <path d="M-40 2305 C300 2245 600 2335 900 2295 C1150 2265 1300 2305 1480 2285" fill="none" stroke="#fff3c4" strokeWidth="3" strokeDasharray="22 60" className="anim-dash-rev" />
-      <Tower cx={642} base={3060} />
-      <Tower cx={802} base={3060} />
-      {/* Skybridge */}
-      <rect x="686" y="2752" width="72" height="12" fill="#c9d1df" />
-      <path d="M690 2764 L722 2830 L754 2764" fill="none" stroke="#c9d1df" strokeWidth="5" />
+      <Petronas cx={642} base={3060} />
+      <Petronas cx={802} base={3060} />
+      <Skybridge x1={642} x2={802} base={3060} />
       {MID.map((b, i) => (
         <g key={i}>
           <rect x={b.x} y={3060 - b.h} width={b.w} height={b.h + 10} fill="#171d42" />

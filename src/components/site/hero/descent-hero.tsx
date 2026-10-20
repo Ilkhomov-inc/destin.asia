@@ -1,5 +1,5 @@
 "use client";
-import { motion, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { motion, useMotionValue, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from "motion/react";
 import { ArrowDown, ArrowRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
@@ -97,7 +97,7 @@ export function DescentHero({ locale, title, subtitle }: { locale: Locale; title
   const hintOpacity = useTransform(scrollYProgress, [0, 0.03], [1, 0]);
 
   return (
-    <section ref={sectionRef} className="relative h-[420vh] bg-night" aria-label={title}>
+    <section ref={sectionRef} data-hero className="relative h-[420vh] bg-night" aria-label={title}>
       <div className="sticky top-0 h-svh overflow-hidden">
         <motion.div className="absolute top-0 left-0 will-change-transform" style={{ x: camX, y: camY, width: size.w, height: size.h }}>
           <Scene />

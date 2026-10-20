@@ -9,6 +9,7 @@ import { getDict } from "@/dictionaries";
 import { getSettings } from "@/lib/data";
 import { hasLocale, tr } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/about">) {
   const { lang } = await params;
@@ -25,6 +26,7 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
   const s = await getSettings();
   return (
     <>
+      <Sheet flatTop>
       <section className="topo-bg pt-28 pb-16 sm:pt-36 sm:pb-24">
         <Container className="grid items-center gap-12 lg:grid-cols-2">
           <div>
@@ -37,7 +39,7 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
             </Link>
           </div>
           <div className="relative">
-            <SmartImage src={s.about_image} alt="Destin Asia" className="aspect-[4/5] rounded-[2rem] shadow-lift" sizes="(min-width: 1024px) 50vw, 100vw" priority />
+            <SmartImage src={s.about_image} alt="Destin Asia" className="aspect-[4/5] rounded-[2rem] shadow-lift" sizes="(min-width: 1024px) 50vw, 100vw" preload />
             <div className="absolute -bottom-6 left-4 grid grid-cols-3 gap-2 rounded-2xl bg-white p-3 shadow-lift sm:-left-6">
               {d.about.values.map((v) => (
                 <div key={v.t} className="px-2 text-center">
@@ -55,6 +57,7 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
           <InfoGrid locale={lang} />
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

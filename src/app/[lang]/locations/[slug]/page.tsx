@@ -7,11 +7,13 @@ import { travelLabel, LocationCard } from "@/components/site/location-card";
 import { Container, Eyebrow } from "@/components/site/section";
 import { TourCard } from "@/components/site/tour-card";
 import { buttonClass } from "@/components/ui/button";
+import { LocationMap } from "@/components/ui/expanded-map";
 import { getDict } from "@/dictionaries";
 import { getLocation, getLocations, getSettings, getTours, routeOf } from "@/lib/data";
 import { hasLocale, tr, trList } from "@/lib/i18n";
 import { attractionLd, JsonLd, pageMeta } from "@/lib/seo";
 import { LOCALES } from "@/lib/types";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateStaticParams() {
   const locations = await getLocations();
@@ -44,6 +46,7 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
 
   return (
     <>
+      <Sheet flatTop>
       <JsonLd data={attractionLd(location, lang)} />
       <section className="pt-24 sm:pt-28">
         <Container>
@@ -93,6 +96,9 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
                   </div>
                 ))}
               </dl>
+              {location.lat !== null && location.lng !== null && (
+                <LocationMap className="mt-6" location={`${title} · ${location.region}`} latitude={location.lat} longitude={location.lng} zoom={15} fluid />
+              )}
               <div className="mt-6 flex flex-col gap-3">
                 <AddToTour id={location.id} locale={lang} size="lg" className="w-full justify-center border border-ink/10" />
                 <Link href={`/${lang}/build`} className={buttonClass("primary", "lg", "w-full")}>
@@ -132,6 +138,7 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
           </div>
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

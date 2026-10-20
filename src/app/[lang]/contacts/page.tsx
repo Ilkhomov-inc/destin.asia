@@ -8,6 +8,7 @@ import { getDict } from "@/dictionaries";
 import { getSettings } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/contacts">) {
   const { lang } = await params;
@@ -29,6 +30,7 @@ export default async function ContactsPage({ params }: PageProps<"/[lang]/contac
   return (
     <>
       <PageHero eyebrow={d.nav.contacts} title={d.contacts.title} text={d.contacts.text} />
+      <Sheet>
       <section className="py-12 sm:py-16">
         <Container className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
           <div className="space-y-4">
@@ -62,6 +64,7 @@ export default async function ContactsPage({ params }: PageProps<"/[lang]/contac
           </div>
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

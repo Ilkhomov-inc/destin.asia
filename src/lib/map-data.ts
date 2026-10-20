@@ -1,7 +1,19 @@
 import { travelLabel } from "@/components/site/location-card";
-import type { MapLocation, MapTour } from "@/components/site/topo-map";
 import { tr } from "./i18n";
-import type { Locale, Location, Tour } from "./types";
+import type { Category, Locale, Location, Tour } from "./types";
+
+export type MapLocation = {
+  id: string;
+  slug: string;
+  title: string;
+  short: string;
+  category: Category;
+  cover: string;
+  travel: string | null;
+  lat: number;
+  lng: number;
+};
+export type MapTour = { id: string; title: string; location_ids: string[] };
 
 export function toMapData(locations: Location[], tours: Tour[], locale: Locale): { locations: MapLocation[]; tours: MapTour[] } {
   return {

@@ -21,7 +21,12 @@ export function Header({ locale }: { locale: Locale }) {
   const open = openAt === pathname;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    // Stay transparent over the whole (tall, sticky) home hero, not just its first screen.
+    const onScroll = () => {
+      const hero = document.querySelector<HTMLElement>("[data-hero]");
+      const limit = hero ? hero.offsetHeight - window.innerHeight * 0.6 : 24;
+      setScrolled(window.scrollY > Math.max(24, limit));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

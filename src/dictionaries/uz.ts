@@ -64,6 +64,7 @@ const uz: Dict = {
     eyebrow: "Malayziya bo'ylab shaxsiy gid",
     scroll: "Pastga suring — tog'lardan tushamiz",
     altitude: "Balandlik",
+    route: "Kun yo'nalishi",
     stages: [
       { name: "Genting Highlands", note: "1 800 m · bulutlar, osma yo'l va Chin Swee ibodatxonasi" },
       { name: "Batu Caves", note: "272 pog'ona · oltin Murugan" },
@@ -78,6 +79,9 @@ const uz: Dict = {
     mapEyebrow: "Yo'nalishlar xaritasi",
     mapTitle: "Barcha joylar — bitta xaritada",
     mapText: "Joyni ko'rish uchun nuqtani bosing. Yo'l vaqti — Kuala-Lumpur markazidan.",
+    mapAll: "Butun sayohat",
+    mapCity: "Kuala-Lumpur markazi",
+    mapOpenCity: "KL markazini ochish",
     locEyebrow: "Joylar",
     locTitle: "Sizni olib boradigan joylarimiz",
     locAll: "Barcha joylar",
@@ -225,6 +229,9 @@ const uz: Dict = {
   footer: {
     tagline: "O'zbekiston, Qozog'iston va butun MDH mehmonlari uchun Malayziya bo'ylab gid xizmatlari va turlar.",
     rights: "Barcha huquqlar himoyalangan.",
+  },
+  ambient: {
+    captions: ["Kuala-Lumpur kechayu kunduz yashaydi", "Genting tog'laridan — Petronas chiroqlarigacha", "Malayziyada ko'rishguncha"],
   },
   contactWidget: { title: "Bizga yozing", text: "Rus yoki o'zbek tilida javob beramiz" },
   notFound: { title: "Sahifa topilmadi", text: "Chamasi, noto'g'ri tomonga burilibmiz.", home: "Bosh sahifaga" },

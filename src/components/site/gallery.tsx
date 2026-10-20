@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
@@ -37,7 +37,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
             onClick={() => setOpen(i)}
             className={cn("group relative overflow-hidden bg-paper-2", i === 0 ? "col-span-4 row-span-2 sm:col-span-2" : "hidden sm:block", main.length === 2 && i === 1 && "sm:col-span-2 sm:row-span-2", main.length === 3 && i > 0 && "sm:col-span-2")}
           >
-            <Image src={src} alt={`${alt} ${i + 1}`} fill priority={i === 0} sizes={i === 0 ? "(min-width: 640px) 50vw, 100vw" : "25vw"} className="object-cover transition duration-700 group-hover:scale-105" />
+            <Image src={src} alt={`${alt} ${i + 1}`} fill preload={i === 0} sizes={i === 0 ? "(min-width: 640px) 50vw, 100vw" : "25vw"} className="object-cover transition duration-700 group-hover:scale-105" />
             {i === main.length - 1 && images.length > main.length && (
               <span className="absolute inset-0 flex items-center justify-center bg-night/50 font-display text-2xl font-semibold text-white">+{images.length - main.length}</span>
             )}

@@ -9,6 +9,7 @@ import { getDict } from "@/dictionaries";
 import { getSettings, getVehicles } from "@/lib/data";
 import { hasLocale } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
+import { Sheet } from "@/components/site/sheet";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/transport">) {
   const { lang } = await params;
@@ -28,6 +29,7 @@ export default async function TransportPage({ params }: PageProps<"/[lang]/trans
       <PageHero eyebrow={d.nav.transport} title={d.transport.title} text={d.transport.text}>
         {hasPrices && <CurrencySwitch className="mt-6" />}
       </PageHero>
+      <Sheet>
       <section className="py-12 sm:py-16">
         <Container>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -51,6 +53,7 @@ export default async function TransportPage({ params }: PageProps<"/[lang]/trans
           </div>
         </Container>
       </section>
+      </Sheet>
     </>
   );
 }

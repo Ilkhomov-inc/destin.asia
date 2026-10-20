@@ -47,3 +47,6 @@ next-env.d.ts
 # local data store (dev without Supabase)
 /.data
 /public/uploads
+
+# AI Studio frames before they are prepared into src/assets/hero
+/assets-incoming
