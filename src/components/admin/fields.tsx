@@ -108,13 +108,27 @@ export function ImagesField({ value, onChange, single }: { value: string[]; onCh
 
   const upload = (files: FileList | null) => {
     if (!files?.length) return;
-    const fd = new FormData();
-    Array.from(files).forEach((f) => fd.append("files", f));
+    const list = Array.from(files).slice(0, single ? 1 : undefined);
     setError(null);
     start(async () => {
-      const res = await uploadImages(fd);
-      if (res.error) setError(res.error);
-      if (res.urls.length) onChange(single ? res.urls.slice(0, 1) : [...value, ...res.urls]);
+      // One file per request: several photos together would exceed the 12 MB server-action body limit.
+      const urls: string[] = [];
+      for (const f of list) {
+        const fd = new FormData();
+        fd.append("files", f);
+        try {
+          const res = await uploadImages(fd);
+          urls.push(...res.urls);
+          if (res.error) {
+            setError(res.error);
+            break;
+          }
+        } catch {
+          setError(`${f.name}: не удалось загрузить (нет связи или файл слишком большой)`);
+          break;
+        }
+      }
+      if (urls.length) onChange(single ? urls.slice(0, 1) : [...value, ...urls]);
     });
   };
   const move = (i: number, d: number) => {

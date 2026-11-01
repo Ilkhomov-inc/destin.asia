@@ -33,7 +33,7 @@ export function SaveBar({
   isNew: boolean;
   dirty: boolean;
   onSave: () => Promise<SaveResult>;
-  onSaved: () => void;
+  onSaved: (res: Extract<SaveResult, { ok: true }>) => void;
   deleteTable?: Parameters<typeof deleteRow>[0];
   id: string;
   viewHref?: string;
@@ -42,11 +42,19 @@ export function SaveBar({
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
+  // A thrown action (network drop, server crash) would otherwise reach the error boundary and lose the draft.
+  const failed = () => setMsg({ ok: false, text: "Нет связи с сервером, попробуйте ещё раз" });
+
   const save = () =>
     start(async () => {
-      const res = await onSave();
+      let res: SaveResult;
+      try {
+        res = await onSave();
+      } catch {
+        return failed();
+      }
       if (res.ok) {
-        onSaved();
+        onSaved(res);
         setMsg({ ok: true, text: "Сохранено" });
         if (isNew) router.replace(`${backHref}/${res.id}`);
         else router.refresh();
@@ -56,7 +64,12 @@ export function SaveBar({
   const remove = () => {
     if (!deleteTable || !confirm("Удалить безвозвратно?")) return;
     start(async () => {
-      const res = await deleteRow(deleteTable, id);
+      let res: SaveResult;
+      try {
+        res = await deleteRow(deleteTable, id);
+      } catch {
+        return failed();
+      }
       if (res.ok) router.replace(backHref);
       else setMsg({ ok: false, text: res.error });
     });

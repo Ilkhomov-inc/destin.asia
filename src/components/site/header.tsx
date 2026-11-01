@@ -30,7 +30,7 @@ export function Header({ locale }: { locale: Locale }) {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [pathname]); // re-measure on navigation: the hero only exists on the home page
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -100,6 +100,8 @@ export function Header({ locale }: { locale: Locale }) {
               <Link
                 key={l.href}
                 href={`/${locale}${l.href}`}
+                // A link to the current page doesn't change the pathname, so close the menu explicitly.
+                onClick={() => setOpenAt(null)}
                 className="border-b border-ink/8 py-4 font-display text-2xl font-semibold text-ink"
               >
                 {l.label}

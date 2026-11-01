@@ -12,6 +12,8 @@ export function ContactFab({ locale, telegram, whatsapp }: { locale: Locale; tel
   return (
     <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
       <div
+        // inert: the hidden panel's links must not be reachable with Tab or a screen reader.
+        inert={!open}
         className={cn(
           "origin-bottom-right rounded-2xl bg-white p-4 shadow-lift transition-all duration-200",
           open ? "scale-100 opacity-100" : "pointer-events-none scale-90 opacity-0",
@@ -20,12 +22,16 @@ export function ContactFab({ locale, telegram, whatsapp }: { locale: Locale; tel
         <p className="font-display text-sm font-semibold">{t.title}</p>
         <p className="mb-3 text-xs text-ink-soft">{t.text}</p>
         <div className="flex flex-col gap-2">
-          <a href={telegram} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-[#229ED9] px-4 py-2.5 text-sm font-semibold text-white">
-            <TelegramIcon className="size-5" /> Telegram
-          </a>
-          <a href={whatsapp} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white">
-            <WhatsAppIcon className="size-5" /> WhatsApp
-          </a>
+          {telegram && (
+            <a href={telegram} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-[#229ED9] px-4 py-2.5 text-sm font-semibold text-white">
+              <TelegramIcon className="size-5" /> Telegram
+            </a>
+          )}
+          {whatsapp && (
+            <a href={whatsapp} target="_blank" rel="noopener" className="flex items-center gap-3 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white">
+              <WhatsAppIcon className="size-5" /> WhatsApp
+            </a>
+          )}
         </div>
       </div>
       <button

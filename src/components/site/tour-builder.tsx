@@ -14,6 +14,9 @@ import { Field, Input } from "@/components/ui/field";
 export type BuilderLocation = { id: string; title: string; region: string; cover: string; category: Category; visit_hours: number; travel_min: number | null };
 export type BuilderVehicle = { id: string; name: string; seats: number; vclass: VehicleClass; examples: string };
 
+/** Same cap as the inquiry schema; longer trips would be dropped from the request. */
+const MAX_DAYS = 60;
+
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-card bg-white p-5 shadow-card sm:p-7">
@@ -41,10 +44,16 @@ export function TourBuilder({ locations, vehicles, locale, telegram }: { locatio
   const totalHours = selected.reduce((s, l) => s + l.visit_hours + ((l.travel_min ?? 0) * 1.2) / 60, 0);
   const suggested = Math.max(1, Math.ceil(totalHours / 8));
   const datesDays = from && to ? Math.round((new Date(to).getTime() - new Date(from).getTime()) / 86400000) + 1 : null;
-  const days = daysManual ?? (datesDays && datesDays > 0 ? datesDays : suggested);
+  const days = Math.min(MAX_DAYS, daysManual ?? (datesDays && datesDays > 0 ? datesDays : suggested));
   const fitting = vehicles.filter((v) => v.seats >= people);
   const recommended = fitting.sort((a, b) => a.seats - b.seats)[0]?.id;
-  const vehicle = vehicles.find((v) => v.id === vehicleId);
+  // A car picked earlier stops counting once the group outgrows it.
+  const vehicle = fitting.find((v) => v.id === vehicleId);
+  const pickDates = (nextFrom: string, nextTo: string) => {
+    setFrom(nextFrom);
+    setTo(nextTo);
+    setDaysManual(null);
+  };
 
   const summaryText = useMemo(() => {
     const lines = [
@@ -92,13 +101,13 @@ export function TourBuilder({ locations, vehicles, locale, telegram }: { locatio
         <Step n={2} title={t.step2}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t.dateFrom}>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Input type="date" value={from} onChange={(e) => pickDates(e.target.value, to)} />
             </Field>
             <Field label={t.dateTo}>
-              <Input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+              <Input type="date" value={to} min={from || undefined} onChange={(e) => pickDates(from, e.target.value)} />
             </Field>
             <Field label={t.days}>
-              <Stepper value={days} min={1} max={30} onChange={setDaysManual} />
+              <Stepper value={days} min={1} max={MAX_DAYS} onChange={setDaysManual} />
             </Field>
             <Field label={t.people}>
               <Stepper value={people} min={1} max={60} onChange={setPeople} />
@@ -111,7 +120,7 @@ export function TourBuilder({ locations, vehicles, locale, telegram }: { locatio
             <button
               type="button"
               onClick={() => setVehicleId(null)}
-              className={cn("rounded-2xl border-2 p-4 text-left transition", vehicleId === null ? "border-route bg-route/5" : "border-ink/10 hover:border-ink/25")}
+              className={cn("rounded-2xl border-2 p-4 text-left transition", !vehicle ? "border-route bg-route/5" : "border-ink/10 hover:border-ink/25")}
             >
               <span className="font-display font-semibold">{t.anyVehicle}</span>
               <span className="mt-1 block text-sm text-ink-soft">{d.common.people(people)}</span>
@@ -126,7 +135,7 @@ export function TourBuilder({ locations, vehicles, locale, telegram }: { locatio
                   onClick={() => setVehicleId(v.id)}
                   className={cn(
                     "relative flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-40",
-                    vehicleId === v.id ? "border-route bg-route/5" : "border-ink/10 hover:border-ink/25",
+                    vehicle?.id === v.id ? "border-route bg-route/5" : "border-ink/10 hover:border-ink/25",
                   )}
                 >
                   <VehicleArt vclass={v.vclass} className="w-24 shrink-0" />
@@ -147,7 +156,7 @@ export function TourBuilder({ locations, vehicles, locale, telegram }: { locatio
             locale={locale}
             source="builder"
             minimal
-            hidden={{ location_ids: selected.map((l) => l.id), days, people, date_from: from || null, date_to: to || null, vehicle_id: vehicleId }}
+            hidden={{ location_ids: selected.map((l) => l.id), days, people, date_from: from || null, date_to: to || null, vehicle_id: vehicle?.id ?? null }}
           />
         </Step>
       </div>

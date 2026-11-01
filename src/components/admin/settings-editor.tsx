@@ -6,7 +6,8 @@ import { Card, ImagesField, LField, TextField } from "./fields";
 
 export function SettingsEditor({ initial }: { initial: Settings }) {
   const { value: v, set, dirty, setDirty } = useDraft(initial);
-  const rate = (k: keyof Settings["rates"], x: string) => set("rates", { ...v.rates, [k]: Number(x) || v.rates[k] });
+  // An emptied field stays empty while typing (0); the server rejects non-positive rates on save.
+  const rate = (k: keyof Settings["rates"], x: string) => set("rates", { ...v.rates, [k]: Number(x) || 0 });
   return (
     <>
       <SaveBar title="Настройки сайта" backHref="/admin" isNew={false} dirty={dirty} id="main" onSave={() => saveSettings(v)} onSaved={() => setDirty(false)} />
@@ -20,9 +21,9 @@ export function SettingsEditor({ initial }: { initial: Settings }) {
           <TextField label="Адрес" value={v.address} onChange={(x) => set("address", x)} />
         </Card>
         <Card title="Курсы валют (сколько за 1 USD)">
-          <TextField label="MYR — ринггит" type="number" value={v.rates.MYR} onChange={(x) => rate("MYR", x)} />
-          <TextField label="UZS — сум" type="number" value={v.rates.UZS} onChange={(x) => rate("UZS", x)} />
-          <TextField label="KZT — тенге" type="number" value={v.rates.KZT} onChange={(x) => rate("KZT", x)} />
+          <TextField label="MYR — ринггит" type="number" value={v.rates.MYR || null} onChange={(x) => rate("MYR", x)} />
+          <TextField label="UZS — сум" type="number" value={v.rates.UZS || null} onChange={(x) => rate("UZS", x)} />
+          <TextField label="KZT — тенге" type="number" value={v.rates.KZT || null} onChange={(x) => rate("KZT", x)} />
         </Card>
         <Card title="Главная" className="xl:col-span-2">
           <LField label="Заголовок" value={v.hero_title} onChange={(x) => set("hero_title", x)} />

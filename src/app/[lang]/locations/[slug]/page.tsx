@@ -102,7 +102,7 @@ export default async function LocationPage({ params }: PageProps<"/[lang]/locati
                 <Link href={`/${lang}/build`} className={buttonClass("primary", "lg", "w-full")}>
                   {d.build.openBuilder}
                 </Link>
-                {location.lat !== null && (
+                {location.lat !== null && location.lng !== null && (
                   <a href={`https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`} target="_blank" rel="noopener" className={buttonClass("ghost", "md", "w-full")}>
                     {d.common.openMap}
                   </a>

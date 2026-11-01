@@ -27,7 +27,10 @@ export function TourEditor({ initial, isNew, locations }: { initial: Tour; isNew
         deleteTable="tours"
         viewHref={`/ru/tours/${v.slug}`}
         onSave={() => saveTour(v)}
-        onSaved={() => setDirty(false)}
+        onSaved={(res) => {
+          if (res.slug) set("slug", res.slug);
+          setDirty(false);
+        }}
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-6">
@@ -102,7 +105,7 @@ export function TourEditor({ initial, isNew, locations }: { initial: Tour; isNew
           </Card>
           <Card title="Параметры">
             <SelectField label="Тип" value={v.kind} options={[{ value: "ready", label: "Готовая программа" }, { value: "custom", label: "Индивидуальный" }]} onChange={(x) => set("kind", x)} />
-            <TextField label="Дней" type="number" value={v.duration_days} onChange={(x) => set("duration_days", Math.max(1, Number(x) || 1))} />
+            <TextField label="Дней" type="number" value={v.duration_days || null} onChange={(x) => set("duration_days", Number(x) || 0)} />
             <TextField label="Цена от, USD" type="number" value={v.price_from} onChange={(x) => set("price_from", num(x))} hint="пусто = «на консультации»" />
             <LField label="Примечание к цене" value={v.price_note} onChange={(x) => set("price_note", x)} multiline rows={2} />
           </Card>

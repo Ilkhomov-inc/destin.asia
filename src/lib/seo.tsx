@@ -13,7 +13,16 @@ export function pageMeta(locale: Locale, path: string, title: string, descriptio
     title,
     description,
     alternates: { canonical: `/${locale}${path}`, languages: { ru: `/ru${path}`, uz: `/uz${path}`, "x-default": `/ru${path}` } },
-    openGraph: { title, description, url: `/${locale}${path}`, images: image ? [{ url: image }] : undefined },
+    // openGraph replaces the layout's object rather than merging, so repeat the site-wide fields.
+    openGraph: {
+      type: "website",
+      siteName: "Destin Asia",
+      locale: locale === "ru" ? "ru_RU" : "uz_UZ",
+      title,
+      description,
+      url: `/${locale}${path}`,
+      images: image ? [{ url: image }] : undefined,
+    },
   };
 }
 
@@ -41,7 +50,7 @@ export function attractionLd(l: Location, locale: Locale) {
     description: tr(l.short, locale),
     image: l.images.length ? l.images : undefined,
     url: `${SITE_URL}/${locale}/locations/${l.slug}`,
-    geo: l.lat !== null ? { "@type": "GeoCoordinates", latitude: l.lat, longitude: l.lng } : undefined,
+    geo: l.lat !== null && l.lng !== null ? { "@type": "GeoCoordinates", latitude: l.lat, longitude: l.lng } : undefined,
     address: { "@type": "PostalAddress", addressRegion: l.region, addressCountry: "MY" },
   };
 }

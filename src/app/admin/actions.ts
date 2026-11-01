@@ -9,7 +9,8 @@ import { store } from "@/lib/store";
 import { CATEGORIES, INQUIRY_STATUSES, VEHICLE_CLASSES, type Inquiry, type Location, type Review, type Settings, type Tour, type Vehicle } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
-export type SaveResult = { ok: true; id: string } | { ok: false; error: string };
+/** `slug` is the normalised slug the server actually saved, so editors can show it. */
+export type SaveResult = { ok: true; id: string; slug?: string } | { ok: false; error: string };
 
 // ── Auth ────────────────────────────────────────────────────────────
 export async function login(_: string | null, form: FormData): Promise<string | null> {
@@ -45,6 +46,7 @@ const LList = z.object({ ru: z.array(z.string().max(500)).max(50), uz: z.array(z
 const url = z.string().max(2000);
 const status = z.enum(["published", "draft"]);
 const nullableNum = z.number().nonnegative().nullable();
+const rate = z.number().positive("укажите курс больше 0");
 
 const locationSchema = z.object({
   id: z.string().uuid(),
@@ -75,7 +77,7 @@ const tourSchema = z.object({
   title: L,
   short: L,
   description: L,
-  duration_days: z.number().int().min(1).max(60),
+  duration_days: z.number().int().min(1, "минимум 1 день").max(60),
   price_from: nullableNum,
   price_note: L,
   cover: url,
@@ -95,7 +97,7 @@ const vehicleSchema = z.object({
   name: L,
   vclass: z.enum(VEHICLE_CLASSES),
   examples: z.string().max(200),
-  seats: z.number().int().min(1).max(100),
+  seats: z.number().int().min(1, "минимум 1 место").max(100),
   luggage: z.number().int().min(0).max(100),
   description: L,
   features: LList,
@@ -133,7 +135,7 @@ const settingsSchema = z.object({
   about: L,
   about_extra: L,
   about_image: url,
-  rates: z.object({ MYR: z.number().positive(), UZS: z.number().positive(), KZT: z.number().positive() }),
+  rates: z.object({ MYR: rate, UZS: rate, KZT: rate }),
 });
 
 function cleanList(v: { ru: string[]; uz: string[] }) {
@@ -148,9 +150,9 @@ async function uniqueSlug(table: "locations" | "tours", wanted: string, id: stri
   return slug;
 }
 
-function done(id: string): SaveResult {
+function done(id: string, slug?: string): SaveResult {
   revalidatePath("/", "layout");
-  return { ok: true, id };
+  return { ok: true, id, slug };
 }
 
 function fail(e: unknown): SaveResult {
@@ -167,7 +169,7 @@ export async function saveLocation(input: Location): Promise<SaveResult> {
     row.highlights = cleanList(row.highlights);
     row.cover = row.images[0] ?? "";
     await store.upsert("locations", row);
-    return done(row.id);
+    return done(row.id, row.slug);
   } catch (e) {
     return fail(e);
   }
@@ -183,7 +185,7 @@ export async function saveTour(input: Tour): Promise<SaveResult> {
     row.cover = row.images[0] ?? "";
     row.program = row.program.map((p, i) => ({ ...p, day: i + 1 }));
     await store.upsert("tours", row);
-    return done(row.id);
+    return done(row.id, row.slug);
   } catch (e) {
     return fail(e);
   }

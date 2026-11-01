@@ -26,9 +26,26 @@ export function InquiryCard({ inquiry, details }: { inquiry: Inquiry; details: {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [note, setNote] = useState(inquiry.note);
+  const [error, setError] = useState<string | null>(null);
   const set = (patch: { status?: InquiryStatus; note?: string }) =>
     start(async () => {
-      await updateInquiry(inquiry.id, patch);
+      try {
+        const res = await updateInquiry(inquiry.id, patch);
+        setError(res.ok ? null : res.error);
+      } catch {
+        setError("Нет связи с сервером");
+      }
+      router.refresh();
+    });
+  const remove = () =>
+    confirm("Удалить заявку?") &&
+    start(async () => {
+      try {
+        const res = await deleteRow("inquiries", inquiry.id);
+        if (!res.ok) setError(res.error);
+      } catch {
+        setError("Нет связи с сервером");
+      }
       router.refresh();
     });
   const date = new Date(inquiry.created_at);
@@ -51,7 +68,8 @@ export function InquiryCard({ inquiry, details }: { inquiry: Inquiry; details: {
         <a href={contactHref(inquiry)} target="_blank" rel="noopener" className="text-sm font-semibold text-jungle-2 hover:underline">
           {inquiry.contact} · {inquiry.channel}
         </a>
-        <time className="ml-auto text-xs text-ink-soft">{date.toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short" })}</time>
+        <time className="ml-auto text-xs text-ink-soft">{/* A fixed zone keeps server and browser output identical (no hydration mismatch). */}
+          {date.toLocaleString("ru-RU", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kuala_Lumpur" })}</time>
       </header>
       {rows.length > 0 && (
         <dl className="mt-4 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
@@ -71,9 +89,10 @@ export function InquiryCard({ inquiry, details }: { inquiry: Inquiry; details: {
           </button>
         ))}
         {pending && <Loader2 className="size-4 animate-spin text-ink-soft" />}
+        {error && <span className="text-sm font-medium text-route">{error}</span>}
         <button
           type="button"
-          onClick={() => confirm("Удалить заявку?") && start(async () => (await deleteRow("inquiries", inquiry.id), router.refresh()))}
+          onClick={remove}
           className="ml-auto flex size-8 items-center justify-center rounded-lg text-route hover:bg-route/10"
           aria-label="Удалить"
         >

@@ -30,7 +30,7 @@ export function VehicleEditor({ initial, isNew }: { initial: Vehicle; isNew: boo
           <Card title="Параметры">
             <SelectField label="Класс" value={v.vclass} options={VEHICLE_CLASSES.map((c) => ({ value: c, label: ru.vehicleClasses[c] }))} onChange={(x) => set("vclass", x)} />
             <div className="grid grid-cols-2 gap-3">
-              <TextField label="Мест" type="number" value={v.seats} onChange={(x) => set("seats", Math.max(1, Number(x) || 1))} />
+              <TextField label="Мест" type="number" value={v.seats || null} onChange={(x) => set("seats", Number(x) || 0)} />
               <TextField label="Чемоданов" type="number" value={v.luggage} onChange={(x) => set("luggage", Number(x) || 0)} />
             </div>
           </Card>

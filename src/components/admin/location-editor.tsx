@@ -18,7 +18,10 @@ export function LocationEditor({ initial, isNew }: { initial: Location; isNew: b
         deleteTable="locations"
         viewHref={`/ru/locations/${v.slug}`}
         onSave={() => saveLocation(v)}
-        onSaved={() => setDirty(false)}
+        onSaved={(res) => {
+          if (res.slug) set("slug", res.slug);
+          setDirty(false);
+        }}
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-6">

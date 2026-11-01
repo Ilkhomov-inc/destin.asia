@@ -66,7 +66,12 @@ function ReviewRow({ initial, tours, isNew, onDone }: { initial: Review; tours: 
                 ? onDone()
                 : confirm("Удалить отзыв?") &&
                   start(async () => {
-                    await deleteRow("reviews", r.id);
+                    try {
+                      const res = await deleteRow("reviews", r.id);
+                      if (!res.ok) return setErr(res.error);
+                    } catch {
+                      return setErr("Нет связи с сервером");
+                    }
                     router.refresh();
                   })
             }
@@ -80,7 +85,12 @@ function ReviewRow({ initial, tours, isNew, onDone }: { initial: Review; tours: 
             disabled={pending}
             onClick={() =>
               start(async () => {
-                const res = await saveReview(r);
+                let res;
+                try {
+                  res = await saveReview(r);
+                } catch {
+                  return setErr("Нет связи с сервером");
+                }
                 if (!res.ok) return setErr(res.error);
                 setErr(null);
                 if (isNew) onDone();

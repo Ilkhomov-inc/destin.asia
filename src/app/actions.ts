@@ -52,6 +52,20 @@ export async function submitInquiry(_prev: InquiryState, form: FormData): Promis
     created_at: new Date().toISOString(),
   };
   try {
+    // tour_id/vehicle_id are foreign keys: a tour or car deleted since the page was cached
+    // would fail the insert and lose the lead, so drop references that no longer exist.
+    const [tour, vehicle] = await Promise.all([
+      inquiry.tour_id ? store.get("tours", inquiry.tour_id) : null,
+      inquiry.vehicle_id ? store.get("vehicles", inquiry.vehicle_id) : null,
+    ]);
+    if (!tour) inquiry.tour_id = null;
+    if (!vehicle) inquiry.vehicle_id = null;
+  } catch (e) {
+    console.error("inquiry lookup failed", e);
+    inquiry.tour_id = null;
+    inquiry.vehicle_id = null;
+  }
+  try {
     await store.upsert("inquiries", inquiry);
   } catch (e) {
     console.error("inquiry save failed", e);

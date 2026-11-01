@@ -88,8 +88,9 @@ export function RegionMap({ locations, tours, locale, className }: { locations: 
       .map((id) => (m === "region" && clustered && cityIds.has(id) ? CLUSTER : id))
       .filter((id, i, arr) => i === 0 || arr[i - 1] !== id);
     const pts = ids.map((id) => markers.find((p) => p.id === id)).filter((p): p is Marker => !!p);
+    // Number only the stops that are on the map, so pins match the numbered list beside it.
     const order = new Map<string, number>();
-    tour.location_ids.forEach((id, i) => order.set(id, i));
+    tour.location_ids.filter((id) => loc(id)).forEach((id, i) => order.set(id, i));
     let path = pts.length ? `M${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}` : "";
     for (let i = 1; i < pts.length; i++) {
       const a = pts[i - 1];
